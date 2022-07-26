@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/png" href="../image/rsnake1.png.png" /> 
+    <title>snakou</title>
+    <meta charset="utf-8">
+    <style type="text/css">
+        body{
+            background-color: grey;
+        }
+        canvas{
+            background-color: white;
+        }
+    </style>
+
+</head>
+<body>
+<canvas id="gc" width="405" height="405">       <p>version de chrome obsolète pour l'outil canvas <br> veuillez mettre chrome à jours! merci ;)</p>
+    </canvas>
+    <input type="button" name="cakou" id="lol" value="start">
+    <p>number of brains here : 
+        <input type="text" name="pd" id="rien" value="30">
+    </p>
+    <p id="distance">
+        
+    </p>
+    <p id="scores">
+        
+    </p>
+    <script type="text/javascript">
+ordi=true;
+window.onload=function() {
+    canv=document.getElementById("gc");
+    ctx=canv.getContext("2d");
+    if (!ordi) {
+        document.addEventListener("keydown",keyPush);
+    }
+    setInterval(game,1000/120);
+}
+
+
+var p2=document.getElementById('scores');
+var finScore="resultas : ";
+var maxRound=40;
+var totPoint=0;
+var best=null;
+var dead=0;
+var maxp=1;
+var gs=15,tc=27; //gs=pop[o].taille de carré
+var indic=false; //jeu commencé?
+var round=1; //num. de round passés  (0==>initialisation)
+var prevRound=-1;
+var p=document.getElementById('distance');
+var ax=Math.floor(Math.random()*tc);
+var ay=Math.floor(Math.random()*tc); //ax=pos x de l'objectif, bref
+var chanceMut=2;//chance de mutation en %
+var pop=[];
+var xpos=[];
+var ypos=[];
+var parkourer=[];
+xpos=[12,13,17,2,5,22]
+ypos=[10,5,8,20,10,14]
+for (var i = 0; i < pop.length; i++) {
+    
+    parkourer[i]=0;
+}
+
+
+
+for (var i = 0; i < maxp; i++) {
+    pop[i]={
+        input:null,
+        cerv:null,
+        px:15,
+        py:15,
+        xv:0,
+        yv:0,
+        trail:[],
+        prevKey:0,
+        key:null,
+        maximum:null,
+        tail:5,
+        mort:0,
+        ax:Math.floor(Math.random()*tc),
+        ay:Math.floor(Math.random()*tc),
+        place:0,
+        place2:0,
+        futur:0,
+        tmps:0
+    }
+}
+jack=true;
+//brain zone
+if (jack) {
+        for (var o = 0; o < maxp; o++) {
+            pop[o].input=[];
+            for (var i = 0; i < 20; i++) {
+                pop[o].input[i]={v:0,c:[],ma:null,mb:null,mc:null}                        //v=valeur         c=destination(s) (en bas)
+                for (var ii = 0; ii < 16; ii++) {   
+                    pop[o].input[i].c[ii]={m:null,id1:0,id2:0,v:0} //m=multiplieur    id1=numero du tableau d'arrivée    id2=place dans ce tableau
+                }
+            }
+
+            output=[];
+            for (var i = 0; i < 4; i++) {
+                output[i]={v:0,ma:null,mb:null,mc:null}  //v=valeur    ma,mb ou mc=a*racine cube(x+b)+c
+            }
+
+            pop[o].cerv=[];
+            for (var i = 0; i < 4; i++) {
+                pop[o].cerv[i]={arr:[]}
+                for (var ii = 0; ii < 4; ii++) {
+                    if(i==3){
+                        pop[o].cerv[i].arr[ii]=output[ii];
+                    }else{
+                        pop[o].cerv[i].arr[ii]={v:0,ma:null,mb:null,mc:null,c:[]} //tmtc regarde en haut
+                        for (var iii = 0; iii < 12; iii++) {
+                            pop[o].cerv[i].arr[ii].c[iii]={m:null,id1:0,id2:0,v:0}
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+}
+            output=[];
+            for (var i = 0; i < 4; i++) {
+                output[i]={v:0,ma:null,mb:null,mc:null}  //v=valeur    ma,mb ou mc=a*racine cube(x+b)+c
+            }
+
+            pop[0].cerv=[];
+            for (var i = 0; i < 4; i++) {
+                pop[0].cerv[i]={arr:[]}
+                for (var ii = 0; ii < 4; ii++) {
+                    if(i==3){
+                        pop[0].cerv[i].arr[ii]=output[ii];
+                    }else{
+                        pop[0].cerv[i].arr[ii]={v:0,ma:null,mb:null,mc:null,c:[]} //tmtc regarde en haut
+                    }
+                }
+            }
+
+
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * Math.floor(max));
+}
+
+var count=0;
+function game() {
+
+if (round<=maxRound) {
+    count++;
+    if (count>=6) {indic=true} else {indic=true}
+    for (var o = 0; o < maxp; o++) {
+        if (pop[o].mort==0) {
+            pop[o].tmps++;
+            gameCasu(o);
+        }
+    }
+    for (var o = 0; o < maxp; o++) {
+        inp(o);
+    }
+    if (prevRound!=round) {
+        prevRound=round;
+        for (var o = 0; o < maxp; o++) {
+            if (false) {
+
+                mutation(chanceMut,o);
+            }
+        }
+    }
+    for (var o = 0; o < maxp; o++) {
+        
+        if (pop[o].mort==0) {
+            reflechir(o);
+        }
+    }
+    for (var o = 0; o < maxp; o++) {
+        
+        if (pop[o].mort==0) {
+            outp(o);
+        }
+
+    }
+    if (ordi) {
+        for (var o = 0; o < maxp; o++) {
+            if (pop[o].mort==0) {
+                deplacement(o);
+            }
+        }
+    }
+
+    for (var o = 0; o < maxp; o++) {
+        if (pop[o].mort==1) {
+            dead++;
+        }
+    }
+    if (dead>=maxp) {
+        if (false) {
+
+            recompense();
+        }
+        allDeath();
+        count=0;
+    }
+    dead=0;
+    draw(0);
+}else{
+    alert(finScore);
+}
+    
+        
+}
+
+function recompense(){
+    /*
+    dans cette fonction, chaques emplacements du tableau pop de taille maxp,possede un object tail qui correspond a un score en quelque sorte.
+    chaque emplacement de pop possèdent plusieurds objects, qui sont transferé dans l' emplacement de backup correspondant.
+    puis,chaques pop[i] se voit attribuer les valeurs d'un emplacement de backup selon une variable aléatoire nommé alea, et du tail de celui ci
+    */
+
+    var backup=[]; //ici, c'est le tableau qui est égal a pop[]
+    var alea=0;//
+    var besto=0;//indice i du pop (ou backup) dont la valeur tail est la plus grande.
+    var fut=[];//
+    for (var i = 0; i < maxp; i++) {
+        pop[i].best=false;
+        backup[i]={
+            input:null,
+            cerv:null,
+            px:15,
+            py:15,
+            xv:0,
+            yv:0,
+            trail:[],
+            prevKey:0,
+            key:null,
+            maximum:null,
+            tail:pop[i].tail,
+            mort:0,
+            ax:10,
+            ay:12,
+            place:0,
+            place2:0,
+            futur:0,
+            best:false,
+            tmps:pop[i].tmps
+        }
+    }
+    for (var o = 0; o < maxp; o++) {
+        backup[o].input=[];
+        for (var i = 0; i < 20; i++) {
+                var lul4=pop[o].input[i].ma;
+                var lul5=pop[o].input[i].mb;
+                var lul6=pop[o].input[i].mc;
+            backup[o].input[i]={v:null,c:[],
+                    ma:lul4,
+                    mb:lul5,
+                    mc:lul6}                        
+            for (var ii = 0; ii < pop[o].input[i].c.length; ii++) {
+                var lul1=pop[o].input[i].c[ii].m;
+                var lul2=pop[o].input[i].c[ii].id1;
+                var lul3=pop[o].input[i].c[ii].id2;
+                backup[o].input[i].c[ii]={
+                    m:lul1,
+                    id1:lul2,
+                    id2:lul3,
+                    v:0
+                } 
+            }
+        }
+
+        output=[];
+        for (var i = 0; i < 4; i++) {
+                var lul1=pop[o].cerv[3].arr[i].ma;
+                var lul2=pop[o].cerv[3].arr[i].mb;
+                var lul3=pop[o].cerv[3].arr[i].mc;
+            output[i]={
+                v:0,
+                ma:lul1,
+                mb:lul2,
+                mc:lul3
+            }  
+        }
+
+        backup[o].cerv=[];
+        for (var i = 0; i < 4; i++) {
+            backup[o].cerv[i]={arr:[]}
+            for (var ii = 0; ii < 4; ii++) {
+                if(i==3){
+                    backup[o].cerv[i].arr[ii]=output[ii];
+                }else{
+                    var lul1=pop[o].cerv[i].arr[ii].ma;
+                    var lul2=pop[o].cerv[i].arr[ii].mb;
+                    var lul3=pop[o].cerv[i].arr[ii].mc;
+                    backup[o].cerv[i].arr[ii]={
+                        v:0,
+                        ma:lul1,
+                        mb:lul2,
+                        mc:lul3,
+                        c:[]
+                    }
+                    for (var iii = 0; iii < pop[o].cerv[i].arr[ii].c.length; iii++) {
+                        var lul1=pop[o].cerv[i].arr[ii].c[iii].m;
+                        var lul2=pop[o].cerv[i].arr[ii].c[iii].id1;
+                        var lul3=pop[o].cerv[i].arr[ii].c[iii].id2;
+                         backup[o].cerv[i].arr[ii].c[iii]={
+                            m:lul1,
+                            id1:lul2,
+                            id2:lul3,
+                            v:0
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    var point=[];
+    for (var i = 0; i < backup.length; i++) {
+        backup[i].tail+=backup[i].tmps/20;
+        point[i]=backup[i].tail;
+    }
+    var maxpoint=Math.max(...point);
+    for (var i = 0; i < pop.length; i++) {
+        if (backup[i].tail==maxpoint && backup[i].tail!==5) {
+            backup[i].best=true;
+            backup[i].tail*=5;
+            besto=i;
+        }
+        backup[i].tail-=4;
+        backup[i].place=totPoint;
+        totPoint+=backup[i].tail;
+        backup[i].place2=totPoint;
+    }
+    for (var i = 0; i < backup.length; i++) {
+        alea=Math.random()*totPoint;
+        for (var ii = 0; ii < backup.length; ii++) {
+            if (alea>backup[ii].place && alea<=backup[ii].place2) {
+                fut[i]=ii;
+            }
+        }
+    }
+
+
+
+    fut[0]=besto;
+    for (var i = 0; i < maxp; i++) {
+        pop[i]={
+            input:null,
+            cerv:null,
+            px:15,
+            py:15,
+            xv:0,
+            yv:0,
+            trail:[],
+            prevKey:0,
+            key:null,
+            maximum:null,
+            tail:5,
+            mort:0,
+            ax:10,
+            ay:12,
+            place:0,
+            place2:0,
+            futur:0,
+            best:backup[fut[i]].best,
+            tmps:0
+        }
+    }
+    for (var o = 0; o < maxp; o++) {
+        pop[o].input=[];
+        for (var i = 0; i < 20; i++) {
+                var lul4=backup[fut[o]].input[i].ma;
+                var lul5=backup[fut[o]].input[i].mb;
+                var lul6=backup[fut[o]].input[i].mc;
+            pop[o].input[i]={v:0,c:[],
+                    ma:lul4,
+                    mb:lul5,
+                    mc:lul6}                     
+            for (var ii = 0; ii < backup[fut[o]].input[i].c.length; ii++) {
+                var lul1=backup[fut[o]].input[i].c[ii].m;
+                var lul2=backup[fut[o]].input[i].c[ii].id1;
+                var lul3=backup[fut[o]].input[i].c[ii].id2;
+                pop[o].input[i].c[ii]={
+                    m:lul1,
+                    id1:lul2,
+                    id2:lul3,
+                    v:0
+                }
+            }
+        }
+
+        output=[];
+        for (var i = 0; i < 4; i++) {
+                var lul1=backup[fut[o]].cerv[3].arr[i].ma;
+                var lul2=backup[fut[o]].cerv[3].arr[i].mb;
+                var lul3=backup[fut[o]].cerv[3].arr[i].mc;
+            output[i]={
+                v:0,
+                ma:lul1,
+                mb:lul2,
+                mc:lul3
+            }  
+        }
+
+        pop[o].cerv=[];
+        for (var i = 0; i < 4; i++) {
+            pop[o].cerv[i]={arr:[]}
+            for (var ii = 0; ii < 4; ii++) {
+                if(i==3){
+                    pop[o].cerv[i].arr[ii]=output[ii];
+                }else{
+                    var lul1=backup[fut[o]].cerv[i].arr[ii].ma;
+                    var lul2=backup[fut[o]].cerv[i].arr[ii].mb;
+                    var lul3=backup[fut[o]].cerv[i].arr[ii].mc;
+                    pop[o].cerv[i].arr[ii]={
+                        v:0,
+                        ma:lul1,
+                        mb:lul2,
+                        mc:lul3,
+                        c:[]
+                    }
+                    for (var iii = 0; iii < backup[fut[o]].cerv[i].arr[ii].c.length; iii++) {
+                        var lul1=backup[fut[o]].cerv[i].arr[ii].c[iii].m;
+                        var lul2=backup[fut[o]].cerv[i].arr[ii].c[iii].id1;
+                        var lul3=backup[fut[o]].cerv[i].arr[ii].c[iii].id2;
+                        pop[o].cerv[i].arr[ii].c[iii]={
+                            m:lul1,
+                            id1:lul2,
+                            id2:lul3,
+                            v:0
+                        }
+                    }
+                }
+            }
+        }
+    }
+    var backup=[];
+    p.textContent="    score : "+totPoint;// ne faites pas attention à ca
+}
+
+function inp(o){
+    
+
+    ax=pop[o].ax;
+    ay=pop[o].ay;
+    pop[o].input[0].v=pop[o].px;
+    pop[o].input[1].v=pop[o].py;
+    pop[o].input[2].v=tc-pop[o].px-1;
+    pop[o].input[3].v=tc-pop[o].py-1;
+    if (pop[o].py==ay && pop[o].px-ax>=0) {
+        pop[o].input[4].v=pop[o].px-ax;
+    }else{
+        pop[o].input[4].v=null;
+    }
+    if (pop[o].px==ax && pop[o].py-ay>=0) {
+        pop[o].input[5].v=pop[o].py-ay;
+    }else{
+        pop[o].input[5].v=null;
+    }
+    if(pop[o].px-ax==pop[o].py-ay && pop[o].px-ax>=0){
+        pop[o].input[6].v=pop[o].px-ax;
+    }else{
+        pop[o].input[6].v=null;
+    }
+    if(ay-pop[o].py==pop[o].px-ax && pop[o].px-ax>=0){
+        pop[o].input[15].v=pop[o].px-ax;
+    }else{
+        pop[o].input[15].v=null;
+    }
+
+
+    if (pop[o].py==ay && pop[o].px-ax<=0) {
+        pop[o].input[16].v=ax-pop[o].px;
+    }else{
+        pop[o].input[16].v=null;
+    }
+    if (pop[o].px==ax && pop[o].py-ay<=0) {
+        pop[o].input[17].v=ay-pop[o].py;
+    }else{
+        pop[o].input[17].v=null;
+    }
+    if(pop[o].px-ax==pop[o].py-ay && pop[o].px-ax<=0){
+        pop[o].input[18].v=ax-pop[o].px;
+    }else{
+        pop[o].input[18].v=null;
+    }
+    if(ay-pop[o].py==pop[o].px-ax && pop[o].px-ax<=0){
+        pop[o].input[19].v=ax-pop[o].px;
+    }else{
+        pop[o].input[19].v=null;
+    }
+    pop[o].input[7].v=100;
+    for (var i = 0; i < pop[o].trail.length-1; i++) {
+        if(pop[o].trail[i].y==pop[o].py && pop[o].input[7].v>=pop[o].trail[i].x-pop[o].px && pop[o].trail[i].x-pop[o].px>=0){
+            pop[o].input[7].v=pop[o].trail[i].x-pop[o].px;
+        }
+    }
+    if (pop[o].input[7].v==100) {
+        pop[o].input[7].v=null;
+    }
+    pop[o].input[8].v=100;
+    for (var i = 0; i < pop[o].trail.length-1; i++) {
+        if(pop[o].trail[i].y==pop[o].py && pop[o].input[8].v>=pop[o].px-pop[o].trail[i].x && pop[o].trail[i].x-pop[o].px<=0){
+            pop[o].input[8].v=pop[o].px-pop[o].trail[i].x;
+        }
+    }
+    if (pop[o].input[8].v==100) {
+        pop[o].input[8].v=null;
+    }
+    pop[o].input[9].v=100;
+    for (var i = 0; i < pop[o].trail.length-1; i++) {
+        if(pop[o].trail[i].x==pop[o].px && pop[o].input[9].v>=pop[o].trail[i].y-pop[o].py && pop[o].trail[i].y-pop[o].py>=0){
+            pop[o].input[9].v=pop[o].trail[i].y-pop[o].py;
+        }
+    }
+    if (pop[o].input[9].v==100) {
+        pop[o].input[9].v=null;
+    }
+    pop[o].input[10].v=100;
+
+    for (var i = 0; i < pop[o].trail.length-1; i++) {
+        if(pop[o].trail[i].x==pop[o].px && pop[o].input[10].v>=pop[o].py-pop[o].trail[i].y && pop[o].trail[i].y-pop[o].py<=0){
+            pop[o].input[10].v=pop[o].py-pop[o].trail[i].y;
+        }
+    }
+    if (pop[o].input[10].v==100) {
+        pop[o].input[10].v=null;
+    }
+    pop[o].input[11].v=100;
+    for (var i = 0; i < pop[o].trail.length-1; i++) {
+        if(pop[o].trail[i].y-pop[o].py==pop[o].trail[i].x-pop[o].px && pop[o].input[11].v>=pop[o].trail[i].x-pop[o].px && pop[o].trail[i].x-pop[o].px>=0){
+            pop[o].input[11].v=pop[o].trail[i].x-pop[o].px;
+        }
+    }
+    if (pop[o].input[11].v==100) {
+        pop[o].input[11].v=null;
+    }
+    pop[o].input[12].v=-100;
+    for (var i = 0; i < pop[o].trail.length-1; i++) {
+        if(pop[o].trail[i].y-pop[o].py==pop[o].trail[i].x-pop[o].px && pop[o].input[12].v<=pop[o].trail[i].x-pop[o].px && pop[o].trail[i].x-pop[o].px<=0){
+            pop[o].input[12].v=pop[o].px-pop[o].trail[i].x;
+        }
+    }
+    if (pop[o].input[12].v==-100) {
+        pop[o].input[12].v=null;
+    }
+    pop[o].input[13].v=100;
+    for (var i = 0; i < pop[o].trail.length-1; i++) {
+        if(pop[o].trail[i].y-pop[o].py==pop[o].px-pop[o].trail[i].x && pop[o].input[13].v>=pop[o].trail[i].y-pop[o].py && pop[o].trail[i].y-pop[o].py>=0){
+            pop[o].input[13].v=pop[o].trail[i].y-pop[o].py;
+        }
+    }
+    if (pop[o].input[13].v==100) {
+        pop[o].input[13].v=null;
+    }
+    pop[o].input[14].v=-100;
+    for (var i = 0; i < pop[o].trail.length-1; i++) {
+        if(pop[o].trail[i].y-pop[o].py==pop[o].px-pop[o].trail[i].x && pop[o].input[14].v<=pop[o].trail[i].y-pop[o].py && pop[o].trail[i].y-pop[o].py<=0){
+            pop[o].input[14].v=pop[o].py-pop[o].trail[i].y;
+        }
+    }
+    if (pop[o].input[14].v==-100) {
+        pop[o].input[14].v=null;
+    }
+
+}
+pop[0].input[0]={
+    ma:0,
+    mb:-10,
+    mc:0,
+    c:[]
+}
+pop[0].input[0].c[0]={
+    id1:3,
+    id2:0,
+    m:1
+}
+
+pop[0].input[1]={
+    ma:0,
+    mb:-10,
+    mc:0,
+    c:[]
+}
+pop[0].input[1].c[0]={
+    id1:3,
+    id2:1,
+    m:1
+}
+
+pop[0].input[2]={
+    ma:0,
+    mb:-10,
+    mc:0,
+    c:[]
+}
+pop[0].input[2].c[0]={
+    id1:3,
+    id2:2,
+    m:1
+}
+
+pop[0].input[3]={
+    ma:0,
+    mb:-10,
+    mc:0,
+    c:[]
+}
+pop[0].input[3].c[0]={
+    id1:3,
+    id2:3,
+    m:1
+}
+
+//hihjb
+
+pop[0].input[4]={
+    ma:0,
+    mb:0,
+    mc:5,
+    c:[]
+}
+pop[0].input[4].c[0]={
+    id1:3,
+    id2:0,
+    m:1
+}
+
+pop[0].input[5]={
+    ma:0,
+    mb:0,
+    mc:5,
+    c:[]
+}
+pop[0].input[5].c[0]={
+    id1:3,
+    id2:1,
+    m:1
+}
+/*
+pop[0].input[16]={
+    ma:0,
+    mb:0,
+    mc:5,
+    c:[]
+}
+pop[0].input[16].c[0]={
+    id1:3,
+    id2:2,
+    m:1
+}
+
+pop[0].input[17]={
+    ma:0,
+    mb:0,
+    mc:5,
+    c:[]
+}
+pop[0].input[17].c[0]={
+    id1:3,
+    id2:3,
+    m:1
+}
+*/
+//sécurité anti retour
+
+pop[0].input[7]={
+    ma:1,
+    mb:-4,
+    mc:0,
+    c:[]
+}
+pop[0].input[7].c[0]={
+    id1:3,
+    id2:2,
+    m:2
+}
+pop[0].input[7].c[1]={
+    id1:3,
+    id2:0,
+    m:-0.5
+}
+
+pop[0].input[8]={
+    ma:1,
+    mb:-4,
+    mc:0,
+    c:[]
+}
+pop[0].input[8].c[0]={
+    id1:3,
+    id2:0,
+    m:2
+}
+pop[0].input[8].c[1]={
+    id1:3,
+    id2:2,
+    m:-0.5
+}
+
+pop[0].input[9]={
+    ma:1,
+    mb:-4,
+    mc:0,
+    c:[]
+}
+pop[0].input[9].c[0]={
+    id1:3,
+    id2:3,
+    m:2
+}
+pop[0].input[9].c[1]={
+    id1:3,
+    id2:1,
+    m:-0.5
+}
+
+pop[0].input[10]={
+    ma:1,
+    mb:-4,
+    mc:0,
+    c:[]
+}
+pop[0].input[10].c[0]={
+    id1:3,
+    id2:1,
+    m:2
+}
+pop[0].input[10].c[1]={
+    id1:3,
+    id2:3,
+    m:-0.5
+}
+function mutation(ch,o){
+    var mem;
+    if (round==0) {
+        for (var i = 0; i < 20; i++) {
+            pop[o].input[i]={v:null,c:[],ma:(Math.random()*4) -2,mb:(Math.random()*4)-2,mc:(Math.random()*4) -2}                        
+            for (var ii = 0; ii < getRandomInt(16); ii++) {   
+                pop[o].input[i].c[ii]={m:(Math.random()*4) -2,id1:getRandomInt(4),id2:getRandomInt(4),v:null} 
+            }
+        }
+        for (var i = 0; i < 4; i++) {
+            output[i]={v:0,ma:(Math.random()*4) -2,mb:(Math.random()*4) -2,mc:(Math.random()*4) -2}  
+        }
+        for (var i = 0; i < 4; i++) {
+            pop[o].cerv[i]={arr:[]}
+            for (var ii = 0; ii < 4; ii++) {
+                if(i==3){
+                    pop[o].cerv[i].arr[ii]=output[ii];
+                }else{
+                    pop[o].cerv[i].arr[ii]={v:0,ma:(Math.random()*4) -2,mb:(Math.random()*4)-2,mc:(Math.random()*4) -2,c:[]} 
+                    for (var iii = 0; iii < getRandomInt(11-i*4)+1; iii++) {
+                        pop[o].cerv[i].arr[ii].c[iii]={m:Math.random()*4 -2,id1:getRandomInt(3-i),id2:getRandomInt(4),v:null}
+                    }
+                }
+            }
+        }
+    }else if(o!=0) {
+        for (var i = 0; i < 20; i++) {
+            memi=pop[o].input[i].c.length;
+            var rand=Math.random()*100;
+            if(rand<chanceMut && memi>=2){
+                memi=getRandomInt(16);
+            }
+            memi1=pop[o].input[i].ma;
+            memi2=pop[o].input[i].mb;
+            memi3=pop[o].input[i].mc;
+            if (getRandomInt(100)<=chanceMut) {
+                memi1=Math.random()*4-2;
+            }
+            if (getRandomInt(100)<=chanceMut) {
+                memi2=Math.random()*4-2;
+            }
+            if (getRandomInt(100)<=chanceMut) {
+                memi3=Math.random()*4-2;
+            }   
+            pop[o].input[i].ma=memi1;
+            pop[o].input[i].mb=memi2;
+            pop[o].input[i].mc=memi3;
+            while(pop[o].input[i].c.length>memi){
+                pop[o].input[i].c.splice(getRandomInt(pop[o].input[i].c.length),1);
+            }
+            pop[o].input[i]={v:0,ma:memi1,mb:memi2,mb:memi3,c:pop[o].input[i].c}
+            for (var ii = 0; ii < memi; ii++) {
+                if (pop[o].input[i].c.length>ii) {
+                    memii1=pop[o].input[i].c[ii].m;
+                    memii2=pop[o].input[i].c[ii].id1;
+                    memii3=pop[o].input[i].c[ii].id2;
+                }else{
+                    memii1=Math.random()*4 -2;
+                    memii2=getRandomInt(4);
+                    memii3=getRandomInt(4);
+                }
+
+                if (getRandomInt(100)<=chanceMut) {
+                    memii1=Math.random()*4-2;
+                }
+                if (getRandomInt(100)<=chanceMut) {
+                    memii2=getRandomInt(4);
+                }
+                if (getRandomInt(100)<=chanceMut) {
+                    memii3=getRandomInt(4);
+                }   
+                pop[o].input[i].c[ii]={m:memii1,id1:memii2,id2:memii3,v:null} 
+            }
+        }
+        for (var i = 0; i < 4; i++) {
+                memi1=pop[o].cerv[3].arr[i].ma;
+                memi2=pop[o].cerv[3].arr[i].mb;
+                memi3=pop[o].cerv[3].arr[i].mc;
+
+                if (getRandomInt(100)<=chanceMut) {
+                    memi1=Math.random()*4-2;
+                }
+                if (getRandomInt(100)<=chanceMut) {
+                    memi2=Math.random()*4-2;
+                }
+                if (getRandomInt(100)<=chanceMut) {
+                    memi3=Math.random()*4-2;
+                }   
+
+            output[i]={v:0,ma:memi1,mb:memi3,mc:memi2}  
+        }
+        for (var i = 0; i < 4; i++) {
+            for (var ii = 0; ii < 4; ii++) {
+                if(i==3){
+                    pop[o].cerv[i].arr[ii]=output[ii];
+                }else{
+
+                    memi=pop[o].cerv[i].arr[ii].c.length;
+                    var rand=getRandomInt(100);
+                    if(rand<chanceMut && memi>=2){
+                        memi=getRandomInt(11-i*4)+1;
+                    }
+                    while(pop[o].cerv[i].arr[ii].c.length>memi){
+                        pop[o].cerv[i].arr[ii].c.splice(getRandomInt(pop[o].input[i].c.length),1);
+                    }
+                    memi1=pop[o].cerv[i].arr[ii].ma;
+                    memi2=pop[o].cerv[i].arr[ii].mb;
+                    memi3=pop[o].cerv[i].arr[ii].mc;
+
+                    if (getRandomInt(100)<=chanceMut) {
+                        memi1+=Math.random()*4-2;
+                    }
+                    if (getRandomInt(100)<=chanceMut) {
+                        memi2+=Math.random()*4-2;
+                    }
+                    if (getRandomInt(100)<=chanceMut) {
+                        memi3+=Math.random()*4-2;
+                    }   
+
+                    pop[o].cerv[i].arr[ii].ma=memi1;
+                    pop[o].cerv[i].arr[ii].mb=memi2;
+                    pop[o].cerv[i].arr[ii].mc=memi3;
+                    for (var iii = 0; iii < memi; iii++) {
+                        if (pop[o].cerv[i].arr[ii].c.length>iii) {
+                            memii1=pop[o].cerv[i].arr[ii].c[iii].m;
+                            memii2=pop[o].cerv[i].arr[ii].c[iii].id1;
+                            memii3=pop[o].cerv[i].arr[ii].c[iii].id2;
+                        }else{
+                            memii1=Math.random()*4 -2;
+                            memii2=getRandomInt(3-i);
+                            memii3=getRandomInt(4);
+                        }
+
+                        if (getRandomInt(100)<=chanceMut) {
+                            memii1+=Math.random()*4-2;
+                        }
+                        if (getRandomInt(100)<=chanceMut) {
+                            memii2=getRandomInt(3-i);
+                        }
+                        if (getRandomInt(100)<=chanceMut) {
+                            memii3=getRandomInt(4);
+                        }   
+                        pop[o].cerv[i].arr[ii].c[iii]={m:memii1,id1:memii2,id2:memii3,v:null}
+                    }
+                }
+            }
+        }
+    }
+}
+
+function reflechir(o){
+    for (var i = 0; i < 4; i++) {
+        for (var ii = 0; ii < 4; ii++) {
+            pop[o].cerv[i].arr[ii].v=0
+        }
+    }
+    p.textContent='a :'+pop[0].key+' b : '+pop[0].input[4].v+" score : "+pop[o].trail.length;;
+
+    for (var i = 0; i < pop[o].input.length; i++) {
+        if (pop[o].input[i].v==null) {
+            pop[o].input[i].v=0;
+        }else if (pop[o].input[i].v<=pop[o].input[i].ma ) {
+            pop[o].input[i].v=pop[o].input[i].mb;
+        }else {
+            pop[o].input[i].v=pop[o].input[i].mc;
+        }
+        
+        for (var ii = 0; ii < pop[o].input[i].c.length; ii++) {
+            pop[o].cerv[pop[o].input[i].c[ii].id1].arr[pop[o].input[i].c[ii].id2].v+=pop[o].input[i].v*pop[o].input[i].c[ii].m;
+
+        }
+    }
+    for (var i = 0; i < 4; i++) {
+        for (var ii = 0; ii < 4; ii++) {
+            pop[o].cerv[i].arr[ii].v
+        if (i!=3) {
+                for (var iii = 0; iii < pop[o].cerv[i].arr[ii].c.length; iii++) {
+                    pop[o].cerv[pop[o].cerv[i].arr[ii].c[iii].id1].arr[pop[o].cerv[i].arr[ii].c[iii].id2].v+=pop[o].cerv[i].arr[ii].v*pop[o].cerv[i].arr[ii].c[iii].m;
+                }
+            }
+        }
+    }
+
+
+}//pop[o].input[i].v=pop[o].input[i].ma*(1/1+Math.exp(pop[o].input[i].v+pop[o].input[i].mb))+pop[o].input[i].mc;
+
+function outp(o){
+    var compteur=0;
+    pop[o].maximum=Math.max(pop[o].cerv[3].arr[0].v,pop[o].cerv[3].arr[1].v,pop[o].cerv[3].arr[2].v,pop[o].cerv[3].arr[3].v);
+    for (var i = 0; i < 4; i++) {
+        if (pop[o].maximum<=pop[o].cerv[3].arr[i].v) {
+
+            pop[o].key=i+1;
+        }
+    }
+}
+
+function gameCasu(o){
+
+    pop[o].px+=pop[o].xv;
+    pop[o].py+=pop[o].yv;
+    if(pop[o].px<0) {
+        death(pop[o].tail,o);
+    }
+    if(pop[o].px>tc-1) {
+        death(pop[o].tail,o);
+    }
+    if(pop[o].py<0) {
+        death(pop[o].tail,o);
+    }
+    if(pop[o].py>tc-1) {
+        death(pop[o].tail,o);
+    }
+    for(var i=0;i<pop[o].trail.length;i++) {
+        if(pop[o].trail[i].x==pop[o].px && pop[o].trail[i].y==pop[o].py && indic) {
+            death(pop[o].tail,o)
+        }
+    }
+
+    pop[o].trail.push({x:pop[o].px,y:pop[o].py});          
+    while(pop[o].trail.length>pop[o].tail) {
+        pop[o].trail.shift();
+    }
+    if(pop[o].ax==pop[o].px && pop[o].ay==pop[o].py) {
+        pop[o].tail++;
+        parkourer[o]++;
+        pop[o].ax=Math.floor(Math.random()*tc);
+        pop[o].ay=Math.floor(Math.random()*tc);
+    }
+}
+
+function draw(o){
+
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0,canv.width,canv.height);
+ 
+    ctx.fillStyle="lime";
+    for(var i=0;i<pop[0].trail.length;i++) {
+        ctx.fillRect(pop[0].trail[i].x*gs,pop[0].trail[i].y*gs,gs-2,gs-2);
+    }
+ 
+    ctx.fillStyle="red";
+    ctx.fillRect(pop[0].ax*gs,pop[0].ay*gs,gs-2,gs-2);
+}
+
+function deplacement(o) {
+    if (pop[o].key==1) {
+        if (pop[o].prevKey!=3) {
+            pop[o].xv=-1;pop[o].yv=0;
+            pop[o].prevKey=1;
+        }/*else{
+            pop[o].xv=0;pop[o].yv=-1;
+            pop[o].prevKey=2;
+        }*/
+    }
+    if (pop[o].key==2) {
+        if (pop[o].prevKey!=4) {
+            pop[o].xv=0;pop[o].yv=-1;
+            pop[o].prevKey=2;
+        }/*else{
+            pop[o].xv=1;pop[o].yv=0;
+            pop[o].prevKey=3;
+        }*/
+    }
+    if (pop[o].key==3) {
+        if (pop[o].prevKey!=1) {
+            pop[o].xv=1;pop[o].yv=0;
+            pop[o].prevKey=3;
+        }/*else{
+            pop[o].xv=0;pop[o].yv=1;
+            pop[o].prevKey=4;
+        }*/
+    }
+    if (pop[o].key==4) {
+        if (pop[o].prevKey!=2) {
+            pop[o].xv=0;pop[o].yv=1;
+            pop[o].prevKey=4;
+        }/*else{
+            pop[o].xv=-1;pop[o].yv=0;
+            pop[o].prevKey=1;
+        }*/
+    }
+}
+
+function keyPush(evt) {
+    switch(evt.keyCode) {
+        case 37:
+    indic=true
+            if (pop[o].prevKey!=3) {
+                pop[o].xv=-1;pop[o].yv=0;
+                pop[o].prevKey=1;
+                break;
+            }
+        case 38:
+    indic=true
+            if (pop[o].prevKey!=4) {
+                pop[o].xv=0;pop[o].yv=-1;
+                pop[o].prevKey=2;
+                break;
+            }
+        case 39:
+    indic=true
+            if (pop[o].prevKey!=1) {
+                pop[o].xv=1;pop[o].yv=0;
+                pop[o].prevKey=3;
+                break;
+            }
+        case 40:
+    indic=true
+            if (pop[o].prevKey!=2) {
+                pop[o].xv=0;pop[o].yv=1;
+                pop[o].prevKey=4;
+                break;
+            }
+    }
+}
+function allDeath() {
+    finScore+=" \n "+pop[0].tail;
+    p2.textContent=finScore;
+    round++;
+    dead=0;
+    for (var i = 0; i < pop.length; i++) {
+    
+    parkourer[i]=0;
+    }
+    for (var i = 0; i < maxp; i++) {
+        pop[i].mort=0;
+        pop[i].px=15;
+        pop[i].py=15;
+        pop[i].xv=0;
+        pop[i].yv=0;
+        pop[i].trail=[];
+        pop[i].prevKey=0;
+        pop[i].key=null;
+        pop[i].maximum=null;
+        pop[i].tail=5;
+        pop[i].ax=Math.floor(Math.random()*tc);
+        pop[i].ay=Math.floor(Math.random()*tc);
+        pop[i].place=0;
+        pop[i].place2=0;
+        pop[i].futur=0;
+        pop[i].tmps=0;
+
+    }
+}
+function death(tl,o){
+    pop[o].mort=1;
+    best=null;
+    totPoint=0;
+
+}
+</script>
+</body>
+</html>
